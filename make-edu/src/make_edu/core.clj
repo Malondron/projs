@@ -5,7 +5,6 @@
 ;;; installation program.
 ;;;
 
-(load-file "c:\\users\\andreas\\clj-script\\make-edu-files.clj")
 
 (ns make-edu.core
   (:use [clojure.java.shell :only [sh]]
@@ -91,11 +90,10 @@ be lines with institutions and codes separated by a blank."
 	 (Thread/sleep 5000)
 	 (sign-files)))))
           
-(do
-  (fix-files)
-  (sign-files))
+;(do
+;  (fix-files)
+;  (sign-files))
 
-(range 0 (count [1 2 3]))
 
 
 (defn read-contacts
@@ -105,6 +103,19 @@ The lines with institutions and contacts are separated by a blank."
   (let [listing (vec (map #(split % #" ")(read-lines infile)))]
     (vec (map #(second %) listing))))
 
+(defn write-reg-files [listing]
+  (doseq [v listing]
+    (let [file-name (str *workdir* (first v) "_lic.reg")]
+          (spit file-name (format "Windows Registry Editor Version 5.00%n%n[HKEY_LOCAL_MACHINE\\SOFTWARE\\Equa\\ida-ice\\4.0]%n\"tmplic\"=\"%s\"" (second v))))))
+
+
+(defn write-mails-reg [listing]
+  (doall
+    (for [v listing]
+      (do
+      (let [file-name (str (first v) ".txt")]
+        (spit (str *workdir* file-name)  (format "Exec: SEND%nAddr: %s%nSubj: New IDA ICE license number%n%n%nDear Sir/Madam,%n%nYour IDA ICE Educational version needs a new license number.%nThe current license number expires on 2013-03-31.%n%nYour new license number:%n%nLicense number: %s %nValid to: 2013-05-31 %n%nHow do I update the licenses?%n%nTo update multiple clients:%n%n     1. Download a Windows Registry .reg file, containing your license number:%n       http://www.equaonline.com/temp/%s_lic.reg %n%n     2. Use Group Policy and the below command to distribute the .reg file to the clients in quiet mode: %n       regedit.exe /s %s_lic.reg.%n%n To update a single client maually:%n%n     1. Start IDA ICE on the client.%n     2. Choose Help > About IDA > Upgrade license.%n     3. Enter the license number above.%n%nFor questions, please contact us at ice.support@equa.se%n%nEQUA" (nth v 2) (second v) (first v) (first v)))
+         (str *workdir* file-name))))))
 
 
 (defn write-mails-files
@@ -131,19 +142,6 @@ The lines with institutions and contacts are separated by a blank."
     (doseq [mail mails]
       (sh "MailSupport.exe" mail :dir *workdir*))))
 
-(send-out-files "real")
+;(send-out-files "reg")
 
-(defn write-reg-files [listing]
-  (doseq [v listing]
-    (let [file-name (str *workdir* (first v) "_lic.reg")]
-          (spit file-name (format "Windows Registry Editor Version 5.00%n%n[HKEY_LOCAL_MACHINE\\SOFTWARE\\Equa\\ida-ice\\4.0]%n\"tmplic\"=\"%s\"" (second v))))))
-
-
-(defn write-mails-reg [listing]
-  (doall
-    (for [v listing]
-      (do
-      (let [file-name (str (first v) ".txt")]
-        (spit (str *workdir* file-name)  (format "Exec: SEND%nAddr: %s%nSubj: New IDA ICE license number%n%n%nDear Sir/Madam,%n%nYour IDA ICE Educational version needs a new license number.%nThe current license number expires on 2013-03-31.%n%nYour new license number:%n%nLicense number: %s %nValid to: 2013-05-31 %n%nHow do I update the licenses?%n%nTo update multiple clients:%n%n     1. Download a Windows Registry .reg file, containing your license number:%n       http://www.equaonline.com/temp/%s_lic.reg %n%n     2. Use Group Policy and the below command to distribute the .reg file to the clients in quiet mode: %n       regedit.exe /s %s_lic.reg.%n%n To update a single client maually:%n%n     1. Start IDA ICE on the client.%n     2. Choose Help > About IDA > Upgrade license.%n     3. Enter the license number above.%n%nFor questions, please contact us at ice.support@equa.se%n%nEQUA" (nth v 2) (second v) (first v) (first v)))
-         (str *workdir* file-name))))))
 
