@@ -14,11 +14,11 @@
 
 ;; These should all be updated before making the files
 
-(def *version* "'4.5.0'")
-(def *infile* "ice45(tmp).exe")
+(def *version* "'4.5.1'")
+(def *infile* "ice451(tmp).exe")
 (def *minim* "'4.0.0'")
-(def *guid* "'FEFA385E-B32B-4B2C-B0D4-D08DD3D5EF75'")
-(def *guid2* "'E1F0D528-DB09-4D53-8B02-E228538D4FA1'")
+(def *guid* "'629F1AE6-0EDD-43D1-93B0-DADAACB7526C'")
+(def *guid2* "'A06863C0-4266-4836-82C8-358CB2622023'")
 (def *workdir* "c:\\Users\\Andreas\\Desktop\\msitest\\IDAICEedu\\")
 
 
@@ -114,7 +114,7 @@ The lines with institutions and contacts are separated by a blank."
     (for [v listing]
       (do
       (let [file-name (str (first v) ".txt")]
-        (spit (str *workdir* file-name)  (format "Exec: SEND%nAddr: %s%nSubj: New IDA ICE license number%n%n%nDear Sir/Madam,%n%nYour IDA ICE Educational version needs a new license number.%nThe current license number expires on 2013-03-31.%n%nYour new license number:%n%nLicense number: %s %nValid to: 2013-05-31 %n%nHow do I update the licenses?%n%nTo update multiple clients:%n%n     1. Download a Windows Registry .reg file, containing your license number:%n       http://www.equaonline.com/temp/%s_lic.reg %n%n     2. Use Group Policy and the below command to distribute the .reg file to the clients in quiet mode: %n       regedit.exe /s %s_lic.reg.%n%n To update a single client maually:%n%n     1. Start IDA ICE on the client.%n     2. Choose Help > About IDA > Upgrade license.%n     3. Enter the license number above.%n%nFor questions, please contact us at ice.support@equa.se%n%nEQUA" (nth v 2) (second v) (first v) (first v)))
+        (spit (str *workdir* file-name)  (format "Exec: SEND%nAddr: %s%nSubj: New IDA ICE license number%n%n%nDear Sir/Madam,%n%nYour IDA ICE Educational version needs a new license number.%nThe current license number expires on 2013-09-30.%n%nYour new license number:%n%nLicense number: %s %nValid to: 2013-09-30 %n%nHow do I update the licenses?%n%nTo update multiple clients:%n%n     1. Download a Windows Registry .reg file, containing your license number:%n       http://www.equaonline.com/temp/%s_lic.reg %n%n     2. Use Group Policy and the below command to distribute the .reg file to the clients in quiet mode: %n       regedit.exe /s %s_lic.reg.%n%n To update a single client maually:%n%n     1. Start IDA ICE on the client.%n     2. Choose Help > About IDA > Upgrade license.%n     3. Enter the license number above.%n%nFor questions, please contact us at ice.support@equa.se%n%nEQUA" (nth v 2) (second v) (first v) (first v)))
          (str *workdir* file-name))))))
 
 
@@ -124,7 +124,7 @@ The lines with institutions and contacts are separated by a blank."
   (doall (for [v vec]
 	   (do
 	   (let [file-name (str (first v) ".txt")]
-	       (spit (str *workdir* file-name) (format "Exec: SEND%nAddr: %s%nSubj: New version of IDA ICE%n%n%nDear Sir/Madam,%n%nA new installation file of IDA ICE 4.5 is now available for download at http://www.equaonline.com/temp/%s.msi and will remain so for some days at least. This is a version with your personal license number in it.%n%nThere is a non-silent version available at: http://www.equa.se/deliv/ice45(tmp).exe%n%nYour license number is: %s%n%nIt is valid until 2013-05-31.%n%nIf you use the non-silent version, you will have to give the license number the first time you start the program. Just copy and paste it from above.%n%nThe following instructions are with regards to the educational/classroom version. Stand-alone installations use another document.%n%nA few things to think about before/during the installation:%n%n1. We recommend that you first uninstall a possible beta version of IDA ICE 4 and that you remove all old shortcuts and libraries that remain after you have uninstalled.%n2. If you want to retain an earlier version of IDA ICE, install IDA ICE 4 into a new folder. Be aware that you need to keep track of what shortcuts that lead to which version of the program.%n%nInstallation:%n%nInstall the IDA ICE 4 software on all machines you want to run IDA ICE 4 on on the network by using Group Policies and assigning the .msi-file to the computers. The default directory is c:\\Program Files\\IDA. This can be changed by specifying INSTALLDIR to be whatever you want using transforms (if using Group Policy) or by specifying INSTALLDIR=\"wanted\\path\" after msiexec /i IDAICE...msi if you are installing on each computer separately. The .msi-file needs to be run with administrative rights. If on Vista or Windows 7, the Windows UAC needs to be turned off, or the program run with elevated rights. Also deactivate any anti-virus programs on the computers.%n%nIf any problems occur during installation or activation, please contact ice.support@equa.se.%n%nBest regards,%n%nAndreas %n%nAndreas Edqvist Kissavos%nEQUA Simulation AB %nandreas.kissavos@equa.se%n+46 8 546 20 121 (phone)%n+46 8 546 20 101 (fax)%nRåsundavägen 100%n169 57 Solna, Sweden%nhttp://www.equa.se    " (v 2) (v 0) (v 1)))
+	       (spit (str *workdir* file-name) (format "Exec: SEND%nAddr: %s%nSubj: New version of IDA ICE%n%n%nDear Sir/Madam,%n%nA new installation file of IDA ICE 4.5.1 is now available for download at http://www.equaonline.com/temp/%s.msi and will remain so for some days at least. This is a version with your personal license number in it.%n%nThere is a non-silent version available at: http://www.equa.se/deliv/ice451(tmp).exe%n%nYour license number is: %s%n%nIt is valid until 2013-09-30.%n%nIf you use the non-silent version, you will have to give the license number the first time you start the program. Just copy and paste it from above.%n%nThe following instructions are with regards to the educational/classroom version. Stand-alone installations use another document.%n%nA few things to think about before/during the installation:%n%n1. We recommend that you first uninstall a possible beta version of IDA ICE 4 and that you remove all old shortcuts and libraries that remain after you have uninstalled.%n2. If you want to retain an earlier version of IDA ICE, install IDA ICE 4 into a new folder. Be aware that you need to keep track of what shortcuts that lead to which version of the program.%n%nInstallation:%n%nInstall the IDA ICE 4 software on all machines you want to run IDA ICE 4 on on the network by using Group Policies and assigning the .msi-file to the computers. The default directory is c:\\Program Files\\IDA. This can be changed by specifying INSTALLDIR to be whatever you want using transforms (if using Group Policy) or by specifying INSTALLDIR=\"wanted\\path\" after msiexec /i IDAICE...msi if you are installing on each computer separately. The .msi-file needs to be run with administrative rights. If on Vista or Windows 7, the Windows UAC needs to be turned off, or the program run with elevated rights. Also deactivate any anti-virus programs on the computers.%n%nIf any problems occur during installation or activation, please contact ice.support@equa.se.%n%nBest regards,%n%nAndreas %n%nAndreas Edqvist Kissavos%nEQUA Simulation AB %nandreas.kissavos@equa.se%n+46 8 546 20 121 (phone)%n+46 8 546 20 101 (fax)%nRåsundavägen 100%n169 57 Solna, Sweden%nhttp://www.equa.se    " (v 2) (v 0) (v 1)))
 	       (str *workdir* file-name))))))
 
 
@@ -142,6 +142,6 @@ The lines with institutions and contacts are separated by a blank."
     (doseq [mail mails]
       (sh "MailSupport.exe" mail :dir *workdir*))))
 
-(send-out-files "real")
+;(send-out-files "reg")
 
 
