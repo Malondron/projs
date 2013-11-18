@@ -1,0 +1,1 @@
+Rad 8 ser ut som: Detum Tid V�rde ,men borde ha formatet: Datum[ ,;]+Tid[ ,;]+[\w+[ ,;]*]+.

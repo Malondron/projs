@@ -1,0 +1,12 @@
+Loggpunkt: SKA1001.DSAd.Value
+Beteckning: GT1 Varmvatten.AT.VAlue
+Beskrivning: GT1 Varmvatten
+Enhet: *C
+Typ: AI
+Starttid: 2008-03-29,17:00:00
+Sluttid: 2008-03-30,17:00:00
+Datum,Tid,Värde
+2008-07-09,00:15:00,54.6
+2008-07-09,00:30:00,54.9
+2008-07-09,00:45:00,55
+

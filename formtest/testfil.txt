@@ -1,0 +1,11 @@
+Loggpunkt: SKB:ST'C  '000  'GT31'Trd36
+Starttid 2008-03-29 17:00:00
+Sluttid 2008-03-30 17:00:00
+Enhet 'C
+IOTyp AI
+Text Temp ute
+Antal värden 278
+Datum Tid Värde
+2008-03-29	17:00:00	8,8
+2008-03-29	17:05:00	8,69
+2008-03-29	17:10:00	8,39

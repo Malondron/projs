@@ -1,0 +1,4 @@
+(ns timeseries.core)
+
+
+(defn fit-polynom [series-y series-x]

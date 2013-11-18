@@ -1,0 +1,51 @@
+(ns compcheck.core
+  (:require [clj-http.client :as client])
+  (:import (java.net InetAddress)))
+
+(def *file* "q:\\users\\andreas\\test.txt")
+
+(def rand-chars (map char (concat (range 48 58) (range 65 91) (range 97 123))))
+
+
+(defn random-char []
+  (nth rand-chars (rand (count rand-chars))))
+
+(defn create-string [size]
+  (apply str (take size (repeatedly random-char))))
+
+(defn write-string [size]
+  (spit *file* (create-string size)))
+
+
+(defn read-file []
+  (slurp *file*))
+
+
+(defn time-stuff [times size]
+  (let [start (System/nanoTime)]
+    (dotimes [i times]
+      (write-string size)
+      (read-file))
+    (/ (/ (-  (System/nanoTime) start) 1000000000.0) times)))
+
+
+(defn file-up? [file]
+  (let [res (client/get file)]
+    (if (= 200 (:status res))
+      true
+      false)))
+
+(file-up? "http://www.equaonline.com/ice4user/index.html")
+
+;(time-stuff 1 1000)
+
+;(defn ping-site [site]
+;  (.isReachable (InetAddress/getByName site) 5000))
+
+;(ping-site "www.dn.se")
+;(InetAddress/getByName "www.equaonline.com")
+
+;(time
+;   (write-string 1000))
+
+  
