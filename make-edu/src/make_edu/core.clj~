@@ -114,7 +114,7 @@ The lines with institutions and contacts are separated by a blank."
     (for [v listing]
       (do
       (let [file-name (str (first v) ".txt")]
-        (spit (str *workdir* file-name)  (format "Exec: SEND%nAddr: %s%nSubj: New IDA ICE license number%n%n%nDear Sir/Madam,%n%nYour IDA ICE Educational version needs a new license number.%nThe current license number expires on 2013-09-30.%n%nYour new license number:%n%nLicense number: %s %nValid to: 2013-09-30 %n%nHow do I update the licenses?%n%nTo update multiple clients:%n%n     1. Download a Windows Registry .reg file, containing your license number:%n       http://www.equaonline.com/temp/%s_lic.reg %n%n     2. Use Group Policy and the below command to distribute the .reg file to the clients in quiet mode: %n       regedit.exe /s %s_lic.reg.%n%n To update a single client maually:%n%n     1. Start IDA ICE on the client.%n     2. Choose Help > About IDA > Upgrade license.%n     3. Enter the license number above.%n%nFor questions, please contact us at ice.support@equa.se%n%nEQUA" (nth v 2) (second v) (first v) (first v)))
+        (spit (str *workdir* file-name)  (format "Exec: SEND%nAddr: %s%nSubj: New IDA ICE license number%n%n%nDear Sir/Madam,%n%nYour IDA ICE Educational version needs a new license number.%nThe current license number expires on 2013-09-30.%n%nYour new license number:%n%nLicense number: %s %nValid to: 2014-01-31 %n%nHow do I update the licenses?%n%nTo update multiple clients:%n%n     1. Download a Windows Registry .reg file, containing your license number:%n       http://www.equaonline.com/temp/%s_lic.reg %n%n     2. Use Group Policy and the below command to distribute the .reg file to the clients in quiet mode: %n       regedit.exe /s %s_lic.reg.%n%n To update a single client maually:%n%n     1. Start IDA ICE on the client.%n     2. Choose Help > About IDA > Upgrade license.%n     3. Enter the license number above.%n%nFor questions, please contact us at ice.support@equa.se%n%nEQUA" (nth v 2) (second v) (first v) (first v)))
          (str *workdir* file-name))))))
 
 
@@ -142,6 +142,6 @@ The lines with institutions and contacts are separated by a blank."
     (doseq [mail mails]
       (sh "MailSupport.exe" mail :dir *workdir*))))
 
-;(send-out-files "reg")
+(send-out-files "reg")
 
 
