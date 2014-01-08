@@ -62,7 +62,7 @@ be lines with institutions and codes separated by a blank."
 (defn add-language [file]
   (let [all-file (str *workdir* (first file) ".wxs")
 	s (vec(read-lines all-file))]
-    (write-lines all-file (flatten (list (subvec s 0 60) (format "             <File Id='language.exe' Name='language.exe' DiskId='1'%n                 Source= '%s' Vital='yes'> %n               </File>%n",  (nth file 2)) (subvec s 60 88) (format "    <CustomAction Id='LaunchFile4' FileKey='language.exe' ExeCommand= '/S' Return='check' /> "  ) (subvec s 88 98) (format "      <Custom Action='LaunchFile4' After='LaunchFile'> NOT Installed </Custom>%n  <Custom Action='LaunchFile3' After='LaunchFile4'> NOT Installed </Custom>%n") (subvec s 99 103))))))
+    (write-lines all-file (flatten (list (subvec s 0 60) (format "             <File Id='language.exe' Name='language.exe' DiskId='1'%n                 Source= '%s' Vital='yes'> %n               </File>%n",  (nth file 3)) (subvec s 60 88) (format "    <CustomAction Id='LaunchFile4' FileKey='language.exe' ExeCommand= '/S' Return='check' /> "  ) (subvec s 88 98) (format "      <Custom Action='LaunchFile4' After='LaunchFile'> NOT Installed </Custom>%n  <Custom Action='LaunchFile3' After='LaunchFile4'> NOT Installed </Custom>%n") (subvec s 99 103))))))
 
 
 (defn fix-files []
@@ -70,7 +70,7 @@ be lines with institutions and codes separated by a blank."
     (do
       (write-wxs-files file-list)
       (doseq [f file-list]
-	(if (< 2 (count f)) 
+	(if (< 3 (count f)) 
 	  (add-language f))
 	(sh "candle.exe" (str (first f) ".wxs") :dir *workdir*)
 	(Thread/sleep 500)
@@ -124,9 +124,16 @@ The lines with institutions and contacts are separated by a blank."
   [vec]
   (doall (for [v vec]
 	   (do
-	   (let [file-name (str (first v) ".txt")]
-	       (spit (str *workdir* file-name) (format "Exec: SEND%nAddr: %s%nSubj: New version of IDA ICE%n%n%nDear Sir/Madam,%n%nA new installation file of IDA ICE 4.5.1 is now available for download at http://www.equaonline.com/temp/%s.msi and will remain so for some days at least. This is a version with your personal license number in it.%n%nThere is a non-silent version available at: http://www.equa.se/deliv/ice451(tmp).exe%n%nYour license number is: %s%n%nIt is valid until 2013-09-30.%n%nIf you use the non-silent version, you will have to give the license number the first time you start the program. Just copy and paste it from above.%n%nThe following instructions are with regards to the educational/classroom version. Stand-alone installations use another document.%n%nA few things to think about before/during the installation:%n%n1. We recommend that you first uninstall a possible beta version of IDA ICE 4 and that you remove all old shortcuts and libraries that remain after you have uninstalled.%n2. If you want to retain an earlier version of IDA ICE, install IDA ICE 4 into a new folder. Be aware that you need to keep track of what shortcuts that lead to which version of the program.%n%nInstallation:%n%nInstall the IDA ICE 4 software on all machines you want to run IDA ICE 4 on on the network by using Group Policies and assigning the .msi-file to the computers. The default directory is c:\\Program Files\\IDA. This can be changed by specifying INSTALLDIR to be whatever you want using transforms (if using Group Policy) or by specifying INSTALLDIR=\"wanted\\path\" after msiexec /i IDAICE...msi if you are installing on each computer separately. The .msi-file needs to be run with administrative rights. If on Vista or Windows 7, the Windows UAC needs to be turned off, or the program run with elevated rights. Also deactivate any anti-virus programs on the computers.%n%nIf any problems occur during installation or activation, please contact ice.support@equa.se.%n%nBest regards,%n%nAndreas %n%nAndreas Edqvist Kissavos%nEQUA Simulation AB %nandreas.kissavos@equa.se%n+46 8 546 20 121 (phone)%n+46 8 546 20 101 (fax)%nRåsundavägen 100%n169 57 Solna, Sweden%nhttp://www.equa.se    " (v 2) (v 0) (v 1)))
-	       (str *workdir* file-name))))))
+             (let [file-name (str (first v) ".txt")
+                   department (= "dep" (v 2))]
+               (if department
+                 (do
+                   (spit (str *workdir* file-name) (format "Exec: SEND%nAddr: %s%nSubj: New version of IDA ICE%n%n%nDear Sir/Madam,%n%nA new installation file of IDA ICE 4.6 is now available for download at http://www.equaonline.com/temp/%s.msi and will remain so for some days at least. This is a version with your personal license number in it.%n%nThere is a non-silent version available at: http://www.equa.se/deliv/ice46(tmp).exe%n%nYour license number is: %s%n%nIt is valid until 2014-04-30.%n%nIf you use the non-silent version, you will have to give the license number the first time you start the program. Just copy and paste it from above.%n%nThe following instructions are with regards to the department/classroom version. Stand-alone installations use another document.%n%nSince you are using a department version, there are two different ways of running the program, as a classroom instance (with no user registration and no way to participate in the IDA ICE User Forum), or as a department instance, where you register yourself as a user and can use the User Forum. We suggest that you install the program as classroom version where it should be so: in classrooms, and also for students. This is what will happen if you follow the instructions below. If you want to install in department mode, which you probably want if you are using IDA ICE for research purpose, please install the file using: msiexec /i IDAICE...msi CLASS=DEP, or if running the non-silent version, add +DEP after the license number, i.e. %s+DEP, when prompted.%n%nSo, to recapitulate:%nSilent, classroom: run the .msi-file as per instructions below.%nSilent, department: run the .msi-file as below but add CLASS=DEP after the msiexec command.%nNon-silent classroom: install the non-silent version, give the license number above when prompted.%nNon-silent, department: install the non-silent version, give the license number above, and add +DEP directly after, when prompted.%n%nA few things to think about before/during the installation:%n%n1. We recommend that you first uninstall a possible beta version of IDA ICE 4 and that you remove all old shortcuts and libraries that remain after you have uninstalled.%n2. If you want to retain an earlier version of IDA ICE, install IDA ICE 4 into a new folder. Be aware that you need to keep track of what shortcuts that lead to which version of the program.%n%nInstallation:%n%nInstall the IDA ICE 4 software on all machines you want to run IDA ICE 4 on on the network by using Group Policies and assigning the .msi-file to the computers. The default directory is c:\\Program Files\\IDA. This can be changed by specifying INSTALLDIR to be whatever you want using transforms (if using Group Policy) or by specifying INSTALLDIR=\"wanted\\path\" after msiexec /i IDAICE...msi if you are installing on each computer separately. The .msi-file needs to be run with administrative rights. If on Vista, Windows 7 or Windows 8, the Windows UAC needs to be turned off, or the program run with elevated rights. Also deactivate any anti-virus programs on the computers.%n%nIf any problems occur during installation or activation, please contact ice.support@equa.se.%n%nBest regards,%n%nAndreas %n%nAndreas Edqvist Kissavos%nEQUA Simulation AB %nandreas.kissavos@equa.se%n+46 8 546 20 121 (phone)%n+46 8 546 20 101 (fax)%nRåsundavägen 100%n169 57 Solna, Sweden%nhttp://www.equa.se    " (v 3) (v 0) (v 1) (v 1)))
+                 (str *workdir* file-name))
+               (do (spit (str *workdir* file-name) (format "Exec: SEND%nAddr: %s%nSubj: New version of IDA ICE%n%n%nDear Sir/Madam,%n%nA new installation file of IDA ICE 4.6 is now available for download at http://www.equaonline.com/temp/%s.msi and will remain so for some days at least. This is a version with your personal license number in it.%n%nThere is a non-silent version available at: http://www.equa.se/deliv/ice46(tmp).exe%n%nYour license number is: %s%n%nIt is valid until 2014-04-30.%n%nIf you use the non-silent version, you will have to give the license number the first time you start the program. Just copy and paste it from above.%n%nThe following instructions are with regards to the educational/classroom version. Stand-alone installations use another document.%n%nA few things to think about before/during the installation:%n%n1. We recommend that you first uninstall a possible beta version of IDA ICE 4 and that you remove all old shortcuts and libraries that remain after you have uninstalled.%n2. If you want to retain an earlier version of IDA ICE, install IDA ICE 4 into a new folder. Be aware that you need to keep track of what shortcuts that lead to which version of the program.%n%nInstallation:%n%nInstall the IDA ICE 4 software on all machines you want to run IDA ICE 4 on on the network by using Group Policies and assigning the .msi-file to the computers. The default directory is c:\\Program Files\\IDA. This can be changed by specifying INSTALLDIR to be whatever you want using transforms (if using Group Policy) or by specifying INSTALLDIR=\"wanted\\path\" after msiexec /i IDAICE...msi if you are installing on each computer separately. The .msi-file needs to be run with administrative rights. If on Vista, Windows 7 or Windows 8, the Windows UAC needs to be turned off, or the program run with elevated rights. Also deactivate any anti-virus programs on the computers.%n%nIf any problems occur during installation or activation, please contact ice.support@equa.se.%n%nBest regards,%n%nAndreas %n%nAndreas Edqvist Kissavos%nEQUA Simulation AB %nandreas.kissavos@equa.se%n+46 8 546 20 121 (phone)%n+46 8 546 20 101 (fax)%nRåsundavägen 100%n169 57 Solna, Sweden%nhttp://www.equa.se    " (v 3) (v 0) (v 1)))
+	       (str *workdir* file-name))))))))
+
+
 
 
 
@@ -137,10 +144,17 @@ The lines with institutions and contacts are separated by a blank."
 	file-list2 (read-contacts (str *workdir* "contacts.txt"))
 	m (for [i (range 0 (count file-list))]
       (let [f (nth file-list i)]	
-	[(first f) (second f) (nth file-list2 i)]))
+	[(first f) (second f) (nth f 2) (nth file-list2 i)]))
 	mails (if (= type "reg") (write-mails-reg m) (write-mails-files m))
         regs (when (= type "reg") (write-reg-files m))]    
     (doseq [mail mails]
       (sh "MailSupport.exe" mail :dir *workdir*))))
 
 ;(send-out-files "reg")
+(comment (let [file-list (read-institutions-and-codes (str *workdir* "institutions_sv.txt"))
+	file-list2 (read-contacts (str *workdir* "contacts_sv.txt"))
+	m (for [i (range 0 (count file-list))]
+      (let [f (nth file-list i)]	
+	[(first f) (second f) (nth f 2) (nth file-list2 i)]))
+      mails (write-mails-files m)]
+  true))
