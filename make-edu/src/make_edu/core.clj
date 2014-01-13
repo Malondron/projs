@@ -146,15 +146,17 @@ The lines with institutions and contacts are separated by a blank."
       (let [f (nth file-list i)]	
 	[(first f) (second f) (nth f 2) (nth file-list2 i)]))
 	mails (if (= type "reg") (write-mails-reg m) (write-mails-files m))
-        regs (when (= type "reg") (write-reg-files m))]    
+        regs (when (= type "reg") (write-reg-files m))]
     (doseq [mail mails]
-      (sh "MailSupport.exe" mail :dir *workdir*))))
+      (sh (str *workdir* "MailSupport.exe") mail :dir *workdir*))))
 
-;(send-out-files "reg")
-(let [file-list (read-institutions-and-codes (str *workdir* "institutions_sv.txt"))
+;(send-out-files "real")
+
+(comment (let [file-list (read-institutions-and-codes (str *workdir* "institutions_sv.txt"))
 	file-list2 (read-contacts (str *workdir* "contacts_sv.txt"))
 	m (for [i (range 0 (count file-list))]
       (let [f (nth file-list i)]	
 	[(first f) (second f) (nth f 2) (nth file-list2 i)]))
       mails (write-mails-files m)]
-  true)
+  true))
+
