@@ -45,7 +45,7 @@
         E (- (* 9.87 (Math/sin (* 2 B))) (* 7.53 (Math/cos B)) (* 1.5 (Math/sin B)))
         hour (- time (* 24 (- daynr 1)))
         soltime (+ hour (/ (* 4 (- -15 -11.728)) 60) (/ E 60))
-        omega (* (- soltime 12) 15 deg2rad)
+        omega (* (- soltime 12.083333) 15 deg2rad)
         sinelevsun (+ (* (Math/cos (* deg2rad 47.874)) (Math/cos dec) (Math/cos omega)) (* (Math/sin (* deg2rad 47.874)) (Math/sin dec)))
         rad2deg (/ 180 Math/PI)
         elevsun (* (Math/asin sinelevsun) rad2deg)
