@@ -1,0 +1,162 @@
+;;;
+;;; Reads the file institutions.txt to get both the name of the institution
+;;; and the license number.
+;;; Don't forget to make a new haspdinst to use in the creation of the 
+;;; installation program.
+;;;
+
+
+(ns make-edu.core
+  (:use [clojure.java.shell :only [sh]]
+        [clojure.java.io :only [reader writer]]
+	[clojure.string :only [split]])
+  (:import (java.io File)))
+
+;; These should all be updated before making the files
+
+(def *version* "'4.6.0'")
+(def *infile* "ice46(tmp).exe")
+(def *minim* "'4.0.0'")
+(def *guid* "'09249ca3-a6af-4413-99f6-ece1baa7d7c9'")
+(def *guid2* "'2bcb1923-0e20-4805-96f0-d74d46908f7b'")
+(def *guid3* "'d5768741-95ba-405c-82ed-54c72090be49'")
+(def *workdir* "d:\\msitest\\IDAICEedu\\")
+
+
+
+(defn read-lines [file]
+  (with-open [r (reader file)]
+    (doall (line-seq r))))
+
+(defn write-lines [file s]
+  (with-open [w (writer file)]
+    (doseq [line s]
+      (.write w  line))))
+
+
+(defn file-exists? [file]
+ (.exists (java.io.File. file)))
+
+(defn read-institutions-and-codes
+"Reads in institutions and codes from the infile. Format expected to
+be lines with institutions and codes separated by a blank." 
+  [infile]
+  (let [listing (vec (map #(split % #" ")(read-lines infile)))]
+ (map #(flatten (cons (str "IDAICEedu-" (first %)) [(rest %)])) listing)))
+
+
+(defn write-wxs-files 
+  [file-list]
+  (let [file-names (vec (map first file-list))
+	codes (vec (map second file-list))]
+    (doall(for [i (range 0  (count file-names))]
+      (let [file-name (str *workdir* (file-names i) ".wxs")]
+	(spit file-name
+	      (format "<?xml version='1.0' encoding='windows-1252'?>%n<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>%n  <Product Name='IDA ICE 4' Id=%s UpgradeCode='F4A81CFC-518C-46AC-BA90-589B6347D18A'%n    Language='1033' Codepage='1252' Version=%s Manufacturer='EQUA'>%n%n%n%n    <Package Id='*' Keywords='Installer'%n      Description=\"Ice Installer\"%n      Comments='Bla' Manufacturer='EQUA'%n      InstallerVersion='100' Languages='1033' Compressed='yes' SummaryCodepage='1252' />%n%n <!-- Check for admin rights -->%n  <Condition Message=\"Administrator rights are required to install the IDA ICE 4. If you are using Windows UAC, please turn it off and try again.\">%n   Privileged%n  </Condition>%n    <Media Id='1' Cabinet='ice.cab' EmbedCab='yes' DiskPrompt=\"CD-ROM #1\" />%n%n    <Upgrade Id=\"F4A81CFC-518C-46AC-BA90-589B6347D18A\">%n%n      <UpgradeVersion Minimum=%s%n                      IncludeMinimum=\"no\"%n                      OnlyDetect=\"no\"%n                      Language=\"1033\"%n                    Property=\"DOWNGRADE\" />%n%n     <UpgradeVersion OnlyDetect='no'%n		      Minimum=%s%n                      IncludeMinimum=\"yes\"%n                      Maximum=%s%n                      IncludeMaximum=\"no\"%n                      RemoveFeatures='all'%n                      Language=\"1033\"%n       Property=\"UPGRADEFOUND\" />%n%n    </Upgrade>%n%n%n%n%n    <Property Id='DiskPrompt' Value=\"EQUA\" />%n%n     <Property Id='CLASS' Value=\"class\" Secure=\"yes\"/>%n  <DirectoryRef Id=\"TARGETDIR\">%n     <Component Id=\"RegistryEntries\" Guid=%s>%n <RegistryKey Root=\"HKCU\" Key=\"Software\\Equa\\ida-ice\">%n           <RegistryValue Type=\"string\" Name=\"classroom\" Value='[CLASS]'/>%n          </RegistryKey>%n    </Component>%n </DirectoryRef>%n%n       <Directory Id='TARGETDIR' Name='SourceDir'>%n	<Directory Id='ProgramFilesFolder' Name='PFiles'>%n      <Directory Id='INSTALLDIR' Name='Ida'>%n%n            <Component Id='MainExecutable' Guid=%s>%n              <File Id='ice.exe' Name='ice.exe' DiskId='1'%n               Source='%s' Vital='yes'>%n%n              </File>%n          
+            <RegistryKey Key=\"Software\\Equa\\ida-ice\\4.0\" Root='HKLM'>%n        <RegistryValue Name=\"Ida_path\" Type=\"string\" Value='[INSTALLDIR]' />%n         
+            <RegistryValue Name=\"tmplic\" Type=\"string\" Value='%s' />%n </RegistryKey>%n            <RemoveFolder Id='ProgramMenuDir' On='uninstall' />%n            </Component>%n%n           <Component Id='UtilExecutable' Guid=%s>%n              <File Id='runwise.exe' Name='runwise.exe' DiskId='1'%n                Source='runwise.exe' Vital='yes'>%n              </File>%n            </Component>%n      </Directory>%n	</Directory>%n    </Directory>%n%n    <Feature Id='Complete' Level='1'>%n      <ComponentRef Id='MainExecutable' />%n <ComponentRef Id='RegistryEntries' />%n     <ComponentRef Id='UtilExecutable' />%n    </Feature>%n%n    <!-- Prevent downgrading -->%n%n    <CustomAction Id=\"PreventDowngrading\" Error=\"Newer version already installed.\" />%n    <CustomAction Id='LaunchFile' FileKey='ice.exe' ExeCommand='/S' Return='check' />%n <CustomAction Id='LaunchFile2' FileKey='runwise.exe' ExeCommand= '\"[INSTALLDIR]\\\"' Return='check' />%n     <CustomAction Id='LaunchFile3' FileKey='runwise.exe' ExeCommand= '\"[INSTALLDIR]\\\" \"%s\"' Return='check' />%n    <CustomAction Id='IsPrivileged' Error='Administrator rights are required to install the IDA ICE 4. If you are using Windows UAC, please turn it off and try again.' />%n%n    <InstallExecuteSequence>%n      <Custom Action=\"IsPrivileged\" Before='LaunchConditions'>NOT Privileged </Custom>%n      <Custom Action=\"PreventDowngrading\" After=\"FindRelatedProducts\">DOWNGRADE</Custom>%n  <RemoveExistingProducts After='InstallValidate' />%n      <Custom Action='LaunchFile' After='InstallFinalize'>  NOT Installed </Custom>%n  <Custom Action='LaunchFile2' After='InstallValidate'> Installed </Custom>%n     <Custom Action='LaunchFile3' After='LaunchFile'> NOT Installed </Custom>%n      <!--Custom Action='LaunchFile3' After='InstallFinalize'> NOT Installed </Custom-->%n    </InstallExecuteSequence>%n  </Product>%n</Wix>" 
+               *guid* *version* *version* *minim* *version* *guid3* *guid* *infile* (codes i) *guid2* *infile*)))))))
+
+
+
+(defn add-language [file]
+  (let [all-file (str *workdir* (first file) ".wxs")
+	s (vec(read-lines all-file))]
+    (write-lines all-file (flatten (list (subvec s 0 60) (format "             <File Id='language.exe' Name='language.exe' DiskId='1'%n                 Source= '%s' Vital='yes'> %n               </File>%n",  (nth file 3)) (subvec s 60 88) (format "    <CustomAction Id='LaunchFile4' FileKey='language.exe' ExeCommand= '/S' Return='check' /> "  ) (subvec s 88 98) (format "      <Custom Action='LaunchFile4' After='LaunchFile'> NOT Installed </Custom>%n  <Custom Action='LaunchFile3' After='LaunchFile4'> NOT Installed </Custom>%n") (subvec s 99 103))))))
+
+
+(defn fix-files []
+  (let [file-list (read-institutions-and-codes (str *workdir* "institutions.txt"))]
+    (do
+      (write-wxs-files file-list)
+      (doseq [f file-list]
+	(if (< 3 (count f)) 
+	  (add-language f))
+	(sh "candle.exe" (str (first f) ".wxs") :dir *workdir*)
+	(Thread/sleep 500)
+	(sh "light.exe" (str (first f) ".wixobj") :dir *workdir*)))))
+
+
+
+
+
+(defn sign-files []
+   "Signs the files with the sign.bat file"
+   (let [file-list (read-institutions-and-codes (str *workdir* "institutions.txt"))
+         files (map #(str *workdir* (first %) ".msi") file-list)]     
+     (if (= (count files) (count (filter file-exists? files)))
+       (for [f files]
+	 (sh (str *workdir* "sign.bat") f :dir *workdir*))
+       (do
+	 (Thread/sleep 5000)
+	 (sign-files)))))
+          
+;(do
+;  (fix-files)
+;  (sign-files))
+
+
+
+(defn read-contacts
+"Reads in contacts from the infile.
+The lines with institutions and contacts are separated by a blank." 
+  [infile]
+  (let [listing (vec (map #(split % #" ")(read-lines infile)))]
+    (vec (map #(second %) listing))))
+
+(defn write-reg-files [listing]
+  (doseq [v listing]
+    (let [file-name (str *workdir* (first v) "_lic.reg")]
+          (spit file-name (format "Windows Registry Editor Version 5.00%n%n[HKEY_LOCAL_MACHINE\\SOFTWARE\\Equa\\ida-ice\\4.0]%n\"tmplic\"=\"%s\"" (second v))))))
+
+
+(defn write-mails-reg [listing]
+  (doall
+    (for [v listing]
+      (do
+      (let [file-name (str (first v) ".txt")]
+        (spit (str *workdir* file-name)  (format "Exec: SEND%nAddr: %s%nSubj: New IDA ICE license number%n%n%nDear Sir/Madam,%n%nYour IDA ICE Educational version needs a new license number.%nThe current license number expires on 2013-09-30.%n%nYour new license number:%n%nLicense number: %s %nValid to: 2014-01-31 %n%nHow do I update the licenses?%n%nTo update multiple clients:%n%n     1. Download a Windows Registry .reg file, containing your license number:%n       http://www.equaonline.com/temp/%s_lic.reg %n%n     2. Use Group Policy and the below command to distribute the .reg file to the clients in quiet mode: %n       regedit.exe /s %s_lic.reg.%n%n To update a single client maually:%n%n     1. Start IDA ICE on the client.%n     2. Choose Help > About IDA > Upgrade license.%n     3. Enter the license number above.%n%nFor questions, please contact us at ice.support@equa.se%n%nEQUA" (nth v 2) (second v) (first v) (first v)))
+         (str *workdir* file-name))))))
+
+
+(defn write-mails-files
+  "Writes the mail files later to be sent out."
+  [vec]
+  (doall (for [v vec]
+	   (do
+             (let [file-name (str (first v) ".txt")
+                   department (= "dep" (v 2))]
+               (if department
+                 (do
+                   (spit (str *workdir* file-name) (format "Exec: SEND%nAddr: %s%nSubj: New version of IDA ICE%n%n%nDear IDA ICE customer,%n%nEQUA is pleased to announce the release of IDA ICE 4.6. The new version, which is available for immediate download for all maintenance agreement customers, adds a series of new features to the software. For highlights and change log, please see below.%n%nHighlights in IDA ICE 4.6:%nwww.equaonline.com/iceuser/4.6_highlights.txt%n%nChange log:%nwww.equaonline.com/iceuser/4.6_changelog.txt%n%nDownload and license%n================%n%nIDA ICE 4.6 (for silent installations):%nhttp://www.equaonline.com/temp/%s.msi%n%nNote: This link is only valid for a week from today.%nNote: This installation file includes your license number.%n%nIDA ICE 4.6 (for non-silent installations):%nhttp://www.equa.se/deliv/ice46(tmp).exe%n%nYour license number (for Classroom use):%n%s%n%nYour license number (for Department use):%n%s+DEP%n%nYour license is valid to:%n2014-04-30%n%nClassroom and Department mode%n=========================%n%nThe software can run in two different modes; (1) Classroom mode, or, (2) Department mode.%n%nClassroom mode:%n- For classroom and student use%n- No user registration required%n- No user access to IDA ICE user forum%n%nFor silent installations, use:%nmsiexec /i <installation_file.msi>%n%nFor non-silent installations, use the .exe-file and enter your license number (for Classroom use) during the installation process (it is recommended to copy and paste the license number).%n%nDepartment mode:%n- For department member use only%n- User registration required%n- Access to IDA ICE user forum%n%nFor silent installations (.msi-file), use:%nmsiexec /i <installation_file.msi> CLASS=DEP%n%nFor non-silent installations, use the .exe-file and enter your license number (for Department use) during the installation process (it is recommended to copy and paste the license number).%n%nInstallation notes:%n%n- There is no problem to have both IDA ICE 4.6 and a previous version installed on the same computer. Just make sure to install IDA ICE 4.6 in a separate folder, e.g. Program Files\\IDA ICE 4.6\\%n%n- On Windows Vista, Windows 7 or Windows 8, the Windows UAC needs to be turned off, else the program will run with elevated rights.%n%n- For group installations:%n%n1. Use Group Policies and assign the msi-file to the computers.%n%n2. The default installation directory is c:\\Program Files\\IDA%nThis can be changed by specifying INSTALLDIR using Transforms, if using Group Policy. Alternatively, in a command prompt when installing manually on a computer, using administrative rights, use:%nmsiexec /i <ida-ice-installation-file>.msi INSTALLDIR=\"<your-path>\"%n%nFor questions or other problems related to your licenses, please don't hesitate to contact us at ida.licenses@equa.se%n%nWe hope you will enjoy IDA ICE 4.6!%n%nBest regards%nThe EQUA team" (v 3) (v 0) (v 1) (v 1)))
+                 (str *workdir* file-name))
+               (do (spit (str *workdir* file-name) (format "Exec: SEND%nAddr: %s%nSubj: New version of IDA ICE%n%n%nDear IDA ICE customer,%n%nEQUA is pleased to announce the release of IDA ICE 4.6. The new version, which is available for immediate download for all maintenance agreement customers, adds a series of new features to the software. For highlights and change log, please see below.%n%nHighlights in IDA ICE 4.6:%nwww.equaonline.com/iceuser/4.6_highlights.txt%n%nChange log:%nwww.equaonline.com/iceuser/4.6_changelog.txt%n%nDownload and license%n================%n%nIDA ICE 4.6 (for silent installations):%nhttp://www.equaonline.com/temp/%s.msi%n%nNote: This link is only valid for a week from today.%nNote: This installation file includes your license number.%n%nIDA ICE 4.6 (for non-silent installations):%nhttp://www.equa.se/deliv/ice46(tmp).exe%n%nYour license number:%n%s%n%nYour license is valid to:%n2014-04-30%n%nFor silent installations, use:%nmsiexec /i <installation_file.msi>%n%nFor non-silent installations, use the .exe-file and enter your license number during the installation process (it is recommended to copy and paste the license number).%n%nInstallation notes:%n%n- There is no problem to have both IDA ICE 4.6 and a previous version installed on the same computer. Just make sure to install IDA ICE 4.6 in a separate folder, e.g. Program Files\\IDA ICE 4.6\\%n%n- On Windows Vista, Windows 7 or Windows 8, the Windows UAC needs to be turned off, else the program will run with elevated rights.%n%n- For group installations:%n%n1. Use Group Policies and assign the msi-file to the computers.%n%n2. The default installation directory is c:\\Program Files\\IDA%nThis can be changed by specifying INSTALLDIR using Transforms, if using Group Policy. Alternatively, in a command prompt when installing manually on a computer, using administrative rights, use:%nmsiexec /i <ida-ice-installation-file>.msi INSTALLDIR=\"<your-path>\"%n%nFor questions or other problems related to your licenses, please don't hesitate to contact us at ida.licenses@equa.se%n%nWe hope you will enjoy IDA ICE 4.6!%n%nBest regards%nThe EQUA team" (v 3) (v 0) (v 1)))
+	       (str *workdir* file-name))))))))
+
+
+
+
+
+(defn send-out-files 
+  "Sends the files to mail addresses specified."
+  [type]
+  (let [file-list (read-institutions-and-codes (str *workdir* "institutions.txt"))
+	file-list2 (read-contacts (str *workdir* "contacts.txt"))
+	m (for [i (range 0 (count file-list))]
+      (let [f (nth file-list i)]	
+	[(first f) (second f) (nth f 2) (nth file-list2 i)]))
+	mails (if (= type "reg") (write-mails-reg m) (write-mails-files m))
+        regs (when (= type "reg") (write-reg-files m))]
+    (doseq [mail mails]
+      (sh (str *workdir* "MailSupport.exe") mail :dir *workdir*))))
+
+;(send-out-files "real")
+
+(comment (let [file-list (read-institutions-and-codes (str *workdir* "institutions_sv.txt"))
+	file-list2 (read-contacts (str *workdir* "contacts_sv.txt"))
+	m (for [i (range 0 (count file-list))]
+      (let [f (nth file-list i)]	
+	[(first f) (second f) (nth f 2) (nth file-list2 i)]))
+      mails (write-mails-files m)]
+  true))
+
