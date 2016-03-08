@@ -1,0 +1,2 @@
+ALTER TABLE blob
+ADD plupp VARCHAR (35)
