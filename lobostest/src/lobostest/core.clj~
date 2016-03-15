@@ -1,0 +1,8 @@
+(ns lobostest.core
+  (:refer-clojure :exclude
+                  [alter drop bigint boolean char double float time complement])
+  (:use 
+        [lobos core schema]))
+
+
+
