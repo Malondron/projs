@@ -1,0 +1,11 @@
+(ns kormatest.trupp-test
+  (:use clojure.test
+        kormatest.test-core)
+  (:require [kormatest.core :as kt]))
+
+(use-fixtures :each with-rollback)
+
+(deftest create-find-user
+  (testing "Create user"
+    (let [user (kt/create {:name "jkjkjkjk" :email "llk99fdj"})]
+      (is (= user (kt/find-by-email "llk99fdj")))))) 

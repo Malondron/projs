@@ -1,7 +1,8 @@
 (ns kormatest.core-test
-  (:require [clojure.test :refer :all]
-            [kormatest.core :refer :all]))
+  (:use clojure.test)
+  (:require [korma.db :as db]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+(defn with-rollback [test-fn]
+  (db/transaction
+   (test-fn)
+   (db/rollback)))
