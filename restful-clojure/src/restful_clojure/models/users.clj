@@ -1,38 +1,48 @@
 (ns restful-clojure.models.users
-  (:use korma.core)
-  (:require [restful-clojure.entities :as e]))
+  (:use restful-clojure.db
+;        restful-clojure.db
+    )
+  (:require [clojure.java.jdbc :as sql]
+            [clojure.tools.logging :as log]
+;            [restful-clojure.entities :as e]
+ ))
 
+(defn find-all [& [trans]] 
+  (sql/query (or trans db) "SELECT * FROM users"))
 
-(defn find-all []
-  (select e/users))
-
-(defn find-by [field value]
+(defn find-by [field value & [trans]]
   (first 
-   (select e/users
-           (where {field value})
-           (limit 1))))
+   (sql/query (or trans db) (str  "SELECT * FROM users WHERE " (name field) "='" value "' LIMIT 1")
+           )))
+
+(defn count-users [& [trans]]
+  (count  (sql/query (or trans db) "SELECT * FROM users")))
+
+(defn delete-all [& [trans]]
+  (when (> (count-users) 0)
+    (log/info "Deleting users...")
+    (sql/query (or trans db) "DELETE FROM users")))
+
+(defn find-by-id [id & [trans]]
+  (find-by :id id trans))
+
+(defn for-list [listdata & [trans]]
+  (find-by-id (listdata :user_id) trans))
+
+(defn find-by-email [email & [trans]]
+  (find-by :email email trans))
+ 
+(defn create [user & [trans]]
+  (let [u-keys (vec (keys user))
+        u-vals (vec (vals user))]
+    (log/info "creating user...")
+    (sql/insert! (or trans db) :users u-keys u-vals) (log/info "created user...")
+    ))
 
 
-(defn find-by-id [id]
-  (find-by :id id))
-
-(defn for-list [listdata]
-  (find-by-id (listdata :user_id)))
-
-(defn find-by-email [email]
-  (find-by :email email))
-
-(defn create [user]
-  (insert e/users (values user)))
+(defn update-user [user & [trans]]
+  (sql/update! (or trans db) :users (dissoc user :id) ["id = ?" (user :id)]))
 
 
-(defn update-user [user]
-  (update e/users (set-fields (dissoc user :id)) 
-          (where {:id (user :id)})))
-
-(defn count-users []
-  (let [agg (select e/users (aggregate (count :*) :cnt))]
-    (get-in agg [0 :cnt] 0)))
-
-(defn delete-users [user]
-  (delete e/users (where {:id (user :id)})))
+(defn delete-user [user & [trans]]
+  (sql/delete! (or trans db) :users ["id = ?" (user :id)]))

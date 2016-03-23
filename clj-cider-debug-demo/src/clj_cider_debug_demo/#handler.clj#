@@ -1,17 +1,22 @@
-(ns kormatest.handler
-  (:use compojure.core
-        ring.middleware.json)
-  (:require [compojure.handler :as handler]
-            [ring.util.response :refer [response]]
-            [environ.core :refer [env]]
+(ns clj-cider-debug-demo.handler
+  (:require [compojure.core :refer [defroutes routes wrap-routes GET]]
+            [clj-cider-debug-demo.routes.home :refer [home-routes]]
+            
+            [clj-cider-debug-demo.middleware :as middleware]
+            [clj-cider-debug-demo.session :as session]
+            [compojure.route :as route]
             [taoensso.timbre :as timbre]
-            [kormatest.middleware :as middleware] 
-;            [korma.session :as session]
             [taoensso.timbre.appenders.rotor :as rotor]
-            [clojure.tools.nrepl.server :as nrepl]
-            [compojure.route :as route]))
+            [selmer.parser :as parser]
+            [environ.core :refer [env]]
+            [clojure.tools.nrepl.server :as nrepl]))
 
 (defonce nrepl-server (atom nil))
+
+(defroutes base-routes
+           (route/resources "/")
+           (route/not-found "Not Found"))
+
 (defn start-nrepl
   "Start a network repl for debugging when the :repl-port is set in the environment."
   []
@@ -40,14 +45,14 @@
      :async?                false ; should be always false for rotor
      :max-message-per-msecs nil
      :fn                    rotor/appender-fn})
-
   (timbre/set-config!
     [:shared-appender-config :rotor]
     {:path "clj_cider_debug_demo.log" :max-size (* 512 1024) :backlog 10})
 
+  (if (env :dev) (parser/cache-off!))
   (start-nrepl)
   ;;start the expired session cleanup job
-;  (session/start-cleanup-job!)
+  (session/start-cleanup-job!)
   (timbre/info (str
                  "\n-=[ clj-cider-debug-demo started successfully"
                  (when (env :dev) "using the development profile")
@@ -61,24 +66,8 @@
   (stop-nrepl)
   (timbre/info "shutdown complete!"))
 
-#dbg
-(defn ffkj []
-  "jklj")
 
 
-(defn rere []
-  (let [jk (ffkj)]
-    jk))
-
-(defroutes app-routes
-  (GET "/" [] (rere))
-  (route/not-found (response {:message "Page not found"})))
-
-(defn wrap-log-request [handler]
-  (fn [req]
-    (println req)
-    (handler req)))
-
-(def app (-> app-routes
-             (wrap-routes #'home-routes middleware/wrap-csrf)
-             ))
+(def app
+   (-> (routes (wrap-routes #'home-routes middleware/wrap-csrf) #'base-routes) middleware/wrap-base)
+)

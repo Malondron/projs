@@ -12,9 +12,7 @@
   :profiles {:dev {
                    :dependencies [[javax.servlet/servlet-api "2.5"]
                                   [ring/ring-mock "0.3.0"]]
-                   }
-             {:env {:database-url "jdbc:postgresql://localhost:5432/restful_dev?user=restful_dev&password=pass_dev"}}
-             :test {:env {:database-url "jdbc:postgresql://localhost:5432/restful_test?user=restful_test&password=pass_test"}}
+                   :env {:database-url "jdbc:postgresql://localhost:5432/restful_dev?user=restful_dev&password=pass_dev"}} :test {:env {:database-url "jdbc:postgresql://localhost:5432/restful_test?user=restful_test&password=pass_test"}}
              }
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [ring/ring-core "1.4.0"]
@@ -24,6 +22,8 @@
                  [korma "0.4.0"]
                  [environ "1.0.2"]
                  [ragtime "0.5.3"]
+                 [org.clojure/java.jdbc "0.4.2"]
+                 [org.clojure/tools.logging "0.3.1"]
                  [org.postgresql/postgresql "9.4-1201-jdbc41"]
                  [cheshire "5.5.0"]])
 

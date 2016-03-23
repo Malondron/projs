@@ -1,10 +1,11 @@
 (ns restful-clojure.entities
   (:use korma.core
-        restful-clojure.db))
+        restful-clojure.db
+        ))
 
 (declare users lists)
 
-(defenity users
+(defentity users
   (pk :id)
   (table :users)
   (has-many lists)

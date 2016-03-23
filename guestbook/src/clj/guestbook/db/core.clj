@@ -45,7 +45,7 @@
 (defn get-timestamp []
   (java.sql.Timestamp. (.getTime (java.util.Date.))))
 
-(get-timestamp)
+(get-messages)
 
 
 

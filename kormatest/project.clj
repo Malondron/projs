@@ -6,12 +6,17 @@
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.0.2"]
             [ragtime/ragtime.lein "0.3.6"]]
+  :jvm-opts ["-server"]
+  :main kormatest.core
   :ring {:handler kormatest.handler/app
-         :nrepl {:start? true
-                 :port 9998}}
+         :init kormatest.handler/init
+         :destroy kormatest.handler/destroy
+         }
   :profiles {:dev {
                  :dependencies [[javax.servlet/servlet-api "2.5"]
-                                [ring/ring-mock "0.3.0"]]
+                                [ring/ring-mock "0.3.0"]
+                                [ring/ring-devel "1.3.2"]]
+                   :repl-options {:init-ns kormatest.core}
                    
                    :env {:database "newtest" :db-user "newtest" :password "newtest"}}
            :test {:env {:database "newtest" :db-user "newtest" :password "newtest"}}
@@ -22,8 +27,10 @@
                  [ring/ring-core "1.4.0"]
                  [ring/ring-json "0.4.0"]
                  [ring/ring-jetty-adapter "1.4.0"]
+                 [com.taoensso/timbre "3.4.0"]
                  [compojure "1.5.0"]
                  [ragtime "0.5.3"]
+                 [ring-server "0.4.0"]
                  [environ "1.0.2"]
                  [org.clojure/java.jdbc "0.4.1"]
                  [org.postgresql/postgresql "9.4-1201-jdbc41"]

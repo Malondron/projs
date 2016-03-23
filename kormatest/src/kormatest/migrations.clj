@@ -1,5 +1,6 @@
 (ns kormatest.migrations
-  (:require [ragtime.jdbc :as jdbc]
+  (:require 
+            [ragtime.jdbc :as jdbc]
             [ragtime.repl :as repl]))
 
 

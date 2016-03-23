@@ -1,22 +1,13 @@
 (ns restful-clojure.db
   (:require [clojure.java.jdbc :as sql]
             [environ.core :as env]
-;            [tentacles.repos :as repos]
             )
   (:import (java.util UUID))
   (:refer-clojure :exclude [find]))
 
 (def db (env/env :database-url))
+(def db "jdbc:postgresql://localhost:5432/restful_test?user=restful_test&password=pass_test")
 
-(defn create [owner project region]
-  (let [{:keys [description]} (apply repos/specific-repo (.split project "/"))]
-    (sql/with-connection db
-      (sql/insert-record :instances {:project project
-                                     :owner owner
-                                     :region region
-                                     :status "starting"
-                                     :shutdown_token (str (UUID/randomUUID))
-                                     :description description}))))
 
 (defn update-status [id args]
   (sql/with-connection db
@@ -69,18 +60,19 @@
 ;; migrations
 
 (defn initial-schema []
-  (sql/create-table "users"
-                    [:id :serial "PRIMARY KEY"]
-                    [:name :varchar 40 "NOT NULL"]
-                    [:email :varchar 60 :unique "NOT NULL"]
-                    [:created_at :timestamp "NOT NULL" "DEFAULT CURRENT_TIMESTAMP"]
-                    [:updated_at :timestamp "NOT NULL" "DEFAULT CURRENT_TIMESTAMP"]
-                    )
-  (sql/create-table "lists"
-                    [:id :serial "PRIMARY KEY"]
-                    [:user_id :integer :references "users" "NOT NULL"]
-                    [:instance_id :integer "NOT NULL"]
-                    [:at :timestamp "NOT NULL" "DEFAULT CURRENT_TIMESTAMP"]))
+  (sql/db-do-commands db
+                      (sql/create-table-ddl :users
+                                            [:id :serial "PRIMARY KEY"]
+                                            [:name :varchar "NOT NULL"]
+                                            [:email :varchar :unique "NOT NULL"]
+                                            [:created_at :timestamp "NOT NULL" "DEFAULT CURRENT_TIMESTAMP"]
+                                            [:updated_at :timestamp "NOT NULL" "DEFAULT CURRENT_TIMESTAMP"]
+                                            )
+                      (sql/create-table-ddl "lists"
+                                            [:id :serial "PRIMARY KEY"]
+                                            [:user_id :integer :references "users" "NOT NULL"]
+                                            [:instance_id :integer "NOT NULL"]
+                                            [:at :timestamp "NOT NULL" "DEFAULT CURRENT_TIMESTAMP"])))
 
 (defn add-instance-id []
   (sql/do-commands "ALTER TABLE instances ADD COLUMN instance_id VARCHAR"))
@@ -96,30 +88,68 @@
 
 ;; migrations mechanics
 
+#dbg
 (defn run-and-record [migration]
   (println "Running migration:" (:name (meta migration)))
   (migration)
-  (sql/insert-values "migrations" [:name :created_at]
+  (sql/insert! db :migrations [:name :created_at]
                      [(str (:name (meta migration)))
                       (java.sql.Timestamp. (System/currentTimeMillis))]))
 
-(defn migrate [& migrations]
-  (sql/with-connection db
-    (try (sql/create-table "migrations"
+#dbg
+(defn test-mig [& migrations]
+  (try
+    (when (not (migrated?))
+      (sql/db-do-commands db
+                          (sql/create-table-ddl
+                           :migrations
                            [:name :varchar "NOT NULL"]
-                           [:created_at :timestamp
-                            "NOT NULL"  "DEFAULT CURRENT_TIMESTAMP"])
-         (catch Exception _))
-    (sql/transaction
-     (let [has-run? (sql/with-query-results run ["SELECT name FROM migrations"]
-                      (set (map :name run)))]
-       (doseq [m migrations
-               :when (not (has-run? (str (:name (meta m)))))]
-         (run-and-record m))))))
+                           [:created_at :timestamp "NOT NULL" "DEFAULT CURRENT_TIMESTAMP"])))
+    (sql/with-db-transaction [dconn db]
+      (let [migs (sql/query dconn ["SELECT name FROM migrations"])
+            has-run? (set (map :name migs))]
+        (has-run? (str (:name (meta (first migrations)))))
+        (doseq [m migrations
+                :when (not (has-run? (str (:name (meta m)))))]
+          (run-and-record m))
 
-(defn -main []
-  (migrate #'initial-schema
-           #'add-instance-id
-           #'add-shutdown-token
-           #'add-dns
-           #'add-region))
+        ))
+        (catch Exception e (str "caught: " (.getMessage e)))   ))
+
+(defn test-blaj []    
+  (sql/with-db-transaction [dconn db]
+      (sql/query dconn ["SELECT name FROM migrations"]
+                                                      :row-fn #(set (map :name (% :name)))))
+ 
+   )
+
+(test-blaj)
+(test-mig #'initial-schema)
+
+(defn migrated? []
+  (-> (sql/query db [(str "select count(*) from information_schema.tables "
+                          "where table_name='migrations'")])
+      first :count pos?))
+
+#dbg
+(defn migrate [& migrations]
+  (sql/db-do-commands db
+                      (sql/create-table-ddl :migrations
+                                            [:name :varchar "NOT NULL"]
+                                            [:created_at :timestamp
+                                             "NOT NULL"  "DEFAULT CURRENT_TIMESTAMP"])
+                          (sql/with-db-transaction [d-conn db]
+                            (let [has-run? (sql/query d-conn ["SELECT name FROM migrations"]
+                                                      :row-fn #(set (map :name (% :name))))]
+                              (doseq [m migrations
+                                      :when (not (has-run? (str (:name (meta m)))))]
+                                (run-and-record m))
+  ))))
+
+
+
+(comment (defn -main []
+           (test-mig #'initial-schema)
+           
+           
+           ))
