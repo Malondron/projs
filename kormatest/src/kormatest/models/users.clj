@@ -25,10 +25,9 @@
           (set-fields (dissoc user :id))
           (where {:id (user :id)})))
 
+
 (defn count-users []
-  (let [agg (select e/users
-                    (aggregate (count :*) :cnt))]i
-       (get-in agg [0 :cnt] 0)))
+  (count (select e/users)))
 
 (defn delete-user [user]
   (delete e/users

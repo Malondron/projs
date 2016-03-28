@@ -3,6 +3,9 @@
         ring.middleware.json)
   (:require [compojure.handler :as handler]
             [ring.util.response :refer [response]]
+            [kormatest.models.users :as users]
+            [kormatest.models.lists :as lists]
+            [kormatest.models.products :as products]
             [environ.core :refer [env]]
             [taoensso.timbre :as timbre]
             [kormatest.middleware :as middleware] 
@@ -61,7 +64,6 @@
   (stop-nrepl)
   (timbre/info "shutdown complete!"))
 
-#dbg
 (defn ffkj []
   "jklj")
 
@@ -70,8 +72,33 @@
   (let [jk (ffkj)]
     jk))
 
+(defn get-lists[_]
+  {:status 200
+   :body {:count (lists/count-lists)
+          :results (lists/find-all)}})
+
+(defn create-list[{listdata :body}]
+  (let [new-list (lists/create listdata)]
+    {:status 201
+     :headers {"Location" (str "/users/" (:user_id new-list) "/lists")}}))
+
+(defn get-users [_]
+  {:status 200
+   :body {:count (users/count-users)
+          :results (users/find-all)}})
+
+(defn create-user [{user :body}]
+  (let [new-user (users/create user)]
+    {:status 201
+     :headers {"Location" (str "/users/" (:id new-user))}}))
+
 (defroutes app-routes
-  (GET "/" [] (rere))
+  (context "/users" []
+           (GET "/" [] get-users)
+           (POST "/" [] create-user))
+  (context "/lists" []
+           (GET "/" [] get-lists)
+           (POST "/" [] create-list))
   (route/not-found (response {:message "Page not found"})))
 
 (defn wrap-log-request [handler]
@@ -80,5 +107,6 @@
     (handler req)))
 
 (def app (-> app-routes
-             (wrap-routes #'home-routes middleware/wrap-csrf)
+             (middleware/wrap-base)
+             
              ))

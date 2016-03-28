@@ -26,6 +26,7 @@
  ;		[migratus "0.8.13"]
                  [ring/ring-core "1.4.0"]
                  [ring/ring-json "0.4.0"]
+                 [ring/ring-defaults "0.1.5"]
                  [ring/ring-jetty-adapter "1.4.0"]
                  [com.taoensso/timbre "3.4.0"]
                  [compojure "1.5.0"]
