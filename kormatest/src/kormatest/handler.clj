@@ -82,6 +82,16 @@
     {:status 201
      :headers {"Location" (str "/users/" (:user_id new-list) "/lists")}}))
 
+(defn get-products [_]
+  {:status 200
+   :body {:count (products/count-products)
+          :results (products/find-all)}})
+
+(defn create-producti [{product :body}]
+  (let [new-prod (products/create product)]
+    {:status 201
+     :headers {"Location" (str "/products/" (:id new-prod))}}))
+
 (defn get-users [_]
   {:status 200
    :body {:count (users/count-users)
@@ -99,6 +109,9 @@
   (context "/lists" []
            (GET "/" [] get-lists)
            (POST "/" [] create-list))
+  (context "/products" []
+           (GET "/" [] get-products)
+           (POST "/" [] create-product))
   (route/not-found (response {:message "Page not found"})))
 
 (defn wrap-log-request [handler]

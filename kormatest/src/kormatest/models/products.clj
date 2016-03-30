@@ -23,8 +23,7 @@
   (find-by :id id))
 
 (defn count-products []
-  (let [agg (select e/products (aggregate (count :*) :cnt))]
-    (get-in agg [0 :cnt] 0)))
+  (count (select e/products)))
 
 (defn update-product [product]
   (update e/products
